@@ -1,0 +1,16 @@
+# Copy this file to terraform.tfvars and fill in your values
+# terraform.tfvars is in .gitignore and will not be committed
+
+aws_region = "us-east-1"
+
+# Generate strong passwords:
+# openssl rand -hex 32
+
+db_username = "tender_admin"
+db_password = "CHANGE_ME_STRONG_PASSWORD_HERE"
+
+app_secret_key = "CHANGE_ME_GENERATE_WITH_OPENSSL"
+jwt_secret_key = "CHANGE_ME_GENERATE_WITH_OPENSSL"
+
+# Ubuntu 22.04 LTS AMI for eu-west-3 (Paris)
+ami_id = "ami-05b5a865c3579bbc4"

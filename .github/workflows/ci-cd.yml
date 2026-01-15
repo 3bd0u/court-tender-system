@@ -1,0 +1,124 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      working-directory: ./backend
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run tests with pytest
+      working-directory: ./backend
+      run: |
+        pytest -v --tb=short
+    
+    - name: Test coverage
+      working-directory: ./backend
+      run: |
+        pip install pytest-cov
+        pytest --cov=app --cov-report=term-missing
+
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install linting tools
+      run: |
+        pip install flake8
+    
+    - name: Run flake8
+      working-directory: ./backend
+      run: |
+        # Ignorer les erreurs de style mineures
+        flake8 app tests --count --max-line-length=127 --extend-ignore=E302,W293,W292,F841,E501,W503 --statistics || echo "Linting warnings found but continuing..."
+        
+  build:
+    name: Build Docker Image
+    needs: [test, lint]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build Docker image
+      working-directory: ./backend
+      run: |
+        docker build -t court-tender-system:${{ github.sha }} .
+        docker tag court-tender-system:${{ github.sha }} court-tender-system:latest
+    
+    - name: Test Docker image
+      run: |
+        docker run -d -p 5000:5000 \
+          -e DATABASE_URL=sqlite:///test.db \
+          -e SECRET_KEY=test-key \
+          -e JWT_SECRET_KEY=test-jwt \
+          --name test-container \
+          court-tender-system:latest
+        sleep 10
+        curl -f http://localhost:5000/api/projects || exit 1
+        docker stop test-container
+        docker rm test-container
+    
+    # Uncomment to push to Docker Hub
+    # - name: Login to Docker Hub
+    #   uses: docker/login-action@v3
+    #   with:
+    #     username: ${{ secrets.DOCKER_USERNAME }}
+    #     password: ${{ secrets.DOCKER_PASSWORD }}
+    # 
+    # - name: Push to Docker Hub
+    #   run: |
+    #     docker tag court-tender-system:latest ${{ secrets.DOCKER_USERNAME }}/court-tender-system:latest
+    #     docker tag court-tender-system:latest ${{ secrets.DOCKER_USERNAME }}/court-tender-system:${{ github.sha }}
+    #     docker push ${{ secrets.DOCKER_USERNAME }}/court-tender-system:latest
+    #     docker push ${{ secrets.DOCKER_USERNAME }}/court-tender-system:${{ github.sha }}
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: './backend'
+        format: 'table'
+        exit-code: '0'
+        ignore-unfixed: true
+

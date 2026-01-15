@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: tender_db
+    environment:
+      POSTGRES_DB: tender_db
+      POSTGRES_USER: tender_user
+      POSTGRES_PASSWORD: tender_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tender_user -d tender_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: tender_backend
+    environment:
+      FLASK_ENV: development
+      SECRET_KEY: dev-secret-key-change-in-production
+      JWT_SECRET_KEY: jwt-secret-key-change-in-production
+      DATABASE_URL: postgresql://tender_user:tender_password@db:5432/tender_db
+      UPLOAD_FOLDER: /app/uploads
+    volumes:
+      - ./backend:/app
+      - uploads_data:/app/uploads
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: python run.py
+
+volumes:
+  postgres_data:
+  uploads_data:

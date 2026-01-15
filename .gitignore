@@ -1,0 +1,66 @@
+# Créer/Mettre à jour le fichier .gitignore à la racine du projet
+cat >> .gitignore << 'EOF'
+
+# ============================================
+# Terraform
+# ============================================
+**/.terraform/*
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# ============================================
+# OS
+# ============================================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ============================================
+# IDE
+# ============================================
+.vscode/
+.idea/
+*.iml
+
+# ============================================
+# Python/Backend
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+backend/venv/
+backend/env/
+backend/.env
+backend/instance/
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# ============================================
+# Frontend
+# ============================================
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+
+# ============================================
+# Docker
+# ============================================
+*.log
+EOF
