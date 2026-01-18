@@ -1,54 +1,90 @@
+// frontend/src/services/projects.js
 import api from './api';
 
+// ============================================
+// PROJECTS SERVICE
+// ============================================
 export const projectsService = {
-  async getAll(status = null) {
-    const params = status ? { status } : {};
-    const { data } = await api.get('/projects', { params });
-    return data;
+  // Récupérer tous les projets
+  getAll: async () => {
+    const response = await api.get('/projects');
+    return response.data;
   },
 
-  async getById(id) {
-    const { data } = await api.get(`/projects/${id}`);
-    return data;
+  // Récupérer un projet par ID
+  getById: async (id) => {
+    const response = await api.get(`/projects/${id}`);
+    return response.data;
   },
 
-  async create(projectData) {
-    const { data } = await api.post('/projects', projectData);
-    return data;
+  // Créer un nouveau projet (admin)
+  create: async (projectData) => {
+    const response = await api.post('/projects', projectData);
+    return response.data;
   },
 
-  async update(id, projectData) {
-    const { data } = await api.put(`/projects/${id}`, projectData);
-    return data;
+  // Mettre à jour un projet (admin)
+  update: async (id, projectData) => {
+    const response = await api.put(`/projects/${id}`, projectData);
+    return response.data;
   },
 
-  async delete(id) {
-    const { data } = await api.delete(`/projects/${id}`);
-    return data;
+  // Supprimer un projet (admin)
+  delete: async (id) => {
+    const response = await api.delete(`/projects/${id}`);
+    return response.data;
   },
 };
 
+// ============================================
+// BIDS SERVICE
+// ============================================
 export const bidsService = {
-  async getAll(projectId = null) {
-    const url = projectId ? `/admin/bids?project_id=${projectId}` : '/admin/bids';
-    const { data } = await api.get(url);
-    return data;
+  // Récupérer toutes les offres (admin)
+  getAll: async () => {
+    const response = await api.get('/admin/bids');
+    return response.data;
   },
 
-  async getById(id) {
-    const { data } = await api.get(`/admin/bids/${id}`);
-    return data;
+  // Récupérer MES offres (candidat) ← FONCTION MANQUANTE !
+  getMine: async () => {
+    const response = await api.get('/bids/mine');
+    return response.data;
   },
 
-  async updateStatus(id, status, notes = '') {
-    const { data } = await api.put(`/admin/bids/${id}/status`, { status, notes });
-    return data;
+  // Soumettre une offre
+  create: async (projectId, formData) => {
+    const response = await api.post(`/projects/${projectId}/bids`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // Mettre à jour le statut d'une offre (admin)
+  updateStatus: async (bidId, status, notes) => {
+    const response = await api.put(`/admin/bids/${bidId}/status`, {
+      status,
+      notes,
+    });
+    return response.data;
   },
 };
 
+// ============================================
+// DASHBOARD SERVICE
+// ============================================
 export const dashboardService = {
-  async getStats() {
-    const { data } = await api.get('/admin/dashboard');
-    return data;
+  // Récupérer les statistiques (admin)
+  getStats: async () => {
+    const response = await api.get('/admin/dashboard');
+    return response.data;
   },
+};
+
+export default {
+  projectsService,
+  bidsService,
+  dashboardService,
 };
